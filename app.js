@@ -4,7 +4,6 @@ var bodyParser = require("body-parser");
 
 // Route imports
 var pingRoutes = require("./routes/pingRoutes");
-//var todoListRoutes = require("./routes/todoListRoutes");
 
 // Mongoose connection with mongodb
 mongoose.Promise = require("bluebird");
@@ -28,11 +27,11 @@ app.use(bodyParser.json());
 app.use("/", pingRoutes);
 
 // Error handler
-app.use(function (err, req, res, next) {
+app.use(function(err, req, res, next) {
     res.status(err.status || 500);
 });
 
-app.listen((port = process.env.PORT || 4200), function () {
+app.listen((port = process.env.PORT || 3000), function() {
     console.log("running at localhost:" + port);
 });
 
