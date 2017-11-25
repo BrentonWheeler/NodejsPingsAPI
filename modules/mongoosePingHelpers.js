@@ -1,13 +1,11 @@
 var Pings = require("../models/pingModel");
 
-// Helper functions //
-function GetAllPingsBetween(startEpochTime, endEpochTime, response) {
-    Pings.find({ epoch_time: { $gte: startEpochTime, $lt: endEpochTime } }, function(err, docs) {
+function GetPingsBetween(startEpochTime, endEpochTime) {
+    return Pings.find({ epoch_time: { $gte: startEpochTime, $lt: endEpochTime } }).then(function(docs) {
         if (docs === undefined) {
-            response.json({
-                error: "That device ID has no pings recorded on that day."
-            });
+            return Promise.resolve({ error: "No pings recorded during that time." });
         } else {
+            // This can be optimised
             let pingsJSON = {};
             docs.map(doc => {
                 pingsJSON[doc.device_id] = [];
@@ -15,37 +13,24 @@ function GetAllPingsBetween(startEpochTime, endEpochTime, response) {
             docs.map(doc => {
                 pingsJSON[doc.device_id].push(doc.epoch_time);
             });
-            response.json(pingsJSON);
+            return Promise.resolve(pingsJSON);
         }
     });
 }
 
-function GetPingsBetweenByDevice(deviceID, startEpochTime, endEpochTime, response) {
-    Pings.find(
-        {
-            $and: [
-                { device_id: deviceID },
-                {
-                    epoch_time: {
-                        $gte: startEpochTime,
-                        $lt: endEpochTime
-                    }
-                }
-            ]
-        },
-        function(err, docs) {
-            if (docs === undefined) {
-                response.json({
-                    error: "That device ID has no pings recorded on that day."
-                });
-            } else {
-                let pingsArray = docs.map(doc => {
-                    return doc.epoch_time;
-                });
-                response.json(pingsArray);
-            }
+function GetPingsBetweenByDevice(startEpochTime, endEpochTime, deviceID) {
+    return Pings.find({
+        $and: [{ device_id: deviceID }, { epoch_time: { $gte: startEpochTime, $lt: endEpochTime } }]
+    }).then(function(docs) {
+        if (docs === undefined) {
+            return Promise.resolve({ error: "That device ID has no pings recorded during that time." });
+        } else {
+            let pingsArray = docs.map(doc => {
+                return doc.epoch_time;
+            });
+            return Promise.resolve(pingsArray);
         }
-    );
+    });
 }
 
-module.exports = { GetAllPingsBetween, GetPingsBetweenByDevice };
+module.exports = { GetPingsBetween, GetPingsBetweenByDevice };

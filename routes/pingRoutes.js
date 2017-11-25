@@ -6,7 +6,7 @@ const SECONDS_IN_A_DAY = 86400;
 
 // POST - route clear stored pings
 pingRouter.route("/clear_data").post(function(req, res) {
-    Pings.remove({}, (err, removed) => {
+    Pings.remove({}, () => {
         res.sendStatus(200);
     });
 });
@@ -19,66 +19,65 @@ pingRouter.route("/:deviceID/:epochTime").post(function(req, res) {
     })
         .save()
         .then(entry => {
-            res.status(200).json({
-                device_id: req.params.deviceID,
-                epoch_time: req.params.epochTime
-            });
+            res.status(200).json(entry);
         })
         .catch(err => {
-            res.status(400).send("unable to save to database");
+            res.status(400).send("Unable to save to database.");
         });
 });
 
-// GET - route to retrieve pings based on date
+// GET - route to return all devices
 pingRouter.route("/devices").get(function(req, res) {
-    Pings.find({}, function(err, docs) {
+    Pings.distinct("device_id", function(err, docs) {
         if (docs === undefined) {
             res.json({
-                error: "No devices are stored."
+                error: "No devices found."
             });
         } else {
-            let deviceArray = [];
-            docs.map(doc => {
-                if (!deviceArray.includes(doc.device_id)) {
-                    deviceArray.push(doc.device_id);
-                }
-            });
-            res.json(deviceArray);
+            res.json(docs);
         }
     });
 });
 
-// GET - route to retrieve pings based on date
+// GET - route to return pings on an ISO date from specified deviceID or "all" devices
 pingRouter.route("/:deviceID/:date").get(function(req, res) {
     let startEpochTime = req.params.date;
     if (startEpochTime.includes("-")) {
-        startEpochTime = parseInt(Date.parse(req.params.date)) / 1000;
+        startEpochTime = Date.parse(req.params.date) / 1000;
     }
     let endEpochTime = startEpochTime + SECONDS_IN_A_DAY;
 
     if (req.params.deviceID === "all") {
-        mongoosePingHelpers.GetAllPingsBetween(startEpochTime, endEpochTime, res);
+        mongoosePingHelpers.GetPingsBetween(startEpochTime, endEpochTime).then(json => {
+            res.json(json);
+        });
     } else {
-        mongoosePingHelpers.GetPingsBetweenByDevice(req.params.deviceID, startEpochTime, endEpochTime, res);
+        mongoosePingHelpers.GetPingsBetweenByDevice(startEpochTime, endEpochTime, req.params.deviceID).then(json => {
+            res.json(json);
+        });
     }
 });
 
-// GET - route to retrieve pings from an epoch or date, to an epoch or date
+// GET - route to return pings :from an epoch time or ISO date, :to an epoch time or ISO date
 pingRouter.route("/:deviceID/:from/:to").get(function(req, res) {
     let startEpochTime = req.params.from;
     let endEpochTime = req.params.to;
 
     if (startEpochTime.includes("-")) {
-        startEpochTime = parseInt(Date.parse(req.params.from)) / 1000;
+        startEpochTime = Date.parse(req.params.from) / 1000;
     }
     if (endEpochTime.includes("-")) {
-        endEpochTime = parseInt(Date.parse(req.params.to)) / 1000;
+        endEpochTime = Date.parse(req.params.to) / 1000;
     }
 
     if (req.params.deviceID === "all") {
-        mongoosePingHelpers.GetAllPingsBetween(startEpochTime, endEpochTime, res);
+        mongoosePingHelpers.GetPingsBetween(startEpochTime, endEpochTime).then(json => {
+            res.json(json);
+        });
     } else {
-        mongoosePingHelpers.GetPingsBetweenByDevice(req.params.deviceID, startEpochTime, endEpochTime, res);
+        mongoosePingHelpers.GetPingsBetweenByDevice(startEpochTime, endEpochTime, req.params.deviceID).then(json => {
+            res.json(json);
+        });
     }
 });
 
