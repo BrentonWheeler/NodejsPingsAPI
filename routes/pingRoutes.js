@@ -6,7 +6,7 @@ const SECONDS_IN_A_DAY = 86400;
 
 // POST - route clear stored pings
 pingRouter.route("/clear_data").post(function(req, res) {
-    Pings.collection.drop().then(() => {
+    Pings.remove({}, (err, removed) => {
         res.sendStatus(200);
     });
 });

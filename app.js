@@ -1,14 +1,16 @@
+require("dotenv").config();
 var express = require("express");
 var mongoose = require("mongoose");
 var bodyParser = require("body-parser");
+var app = express();
 
 // Route imports
 var pingRoutes = require("./routes/pingRoutes");
 
-// Mongoose connection with mongodb
+// Mongoose connection for MongoDB
 mongoose.Promise = require("bluebird");
 mongoose
-    .connect("localhost:27017")
+    .connect(process.env.MONGODB_URL)
     .then(() => {
         console.log("Connected to mongodb");
     })
@@ -16,8 +18,6 @@ mongoose
         console.error("App starting error:", err.stack);
         process.exit(1);
     });
-
-var app = express();
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
