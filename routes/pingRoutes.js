@@ -1,7 +1,7 @@
 var express = require("express");
 var pingRouter = new express.Router();
 var Pings = require("../models/pingModel");
-
+var mongoosePingHelpers = require("../modules/mongoosePingHelpers");
 const SECONDS_IN_A_DAY = 86400;
 
 // POST - route clear stored pings
@@ -57,14 +57,9 @@ pingRouter.route("/:deviceID/:date").get(function(req, res) {
     let endEpochTime = startEpochTime + SECONDS_IN_A_DAY;
 
     if (req.params.deviceID === "all") {
-        GetAllPingsBetween(startEpochTime, endEpochTime, res);
+        mongoosePingHelpers.GetAllPingsBetween(startEpochTime, endEpochTime, res);
     } else {
-        GetPingsBetweenByDevice(
-            req.params.deviceID,
-            startEpochTime,
-            endEpochTime,
-            res
-        );
+        mongoosePingHelpers.GetPingsBetweenByDevice(req.params.deviceID, startEpochTime, endEpochTime, res);
     }
 });
 
@@ -81,71 +76,10 @@ pingRouter.route("/:deviceID/:from/:to").get(function(req, res) {
     }
 
     if (req.params.deviceID === "all") {
-        GetAllPingsBetween(startEpochTime, endEpochTime, res);
+        mongoosePingHelpers.GetAllPingsBetween(startEpochTime, endEpochTime, res);
     } else {
-        GetPingsBetweenByDevice(
-            req.params.deviceID,
-            startEpochTime,
-            endEpochTime,
-            res
-        );
+        mongoosePingHelpers.GetPingsBetweenByDevice(req.params.deviceID, startEpochTime, endEpochTime, res);
     }
 });
-
-// Helper functions //
-function GetAllPingsBetween(startEpochTime, endEpochTime, response) {
-    Pings.find(
-        { epoch_time: { $gte: startEpochTime, $lt: endEpochTime } },
-        function(err, docs) {
-            if (docs === undefined) {
-                response.json({
-                    error: "That device ID has no pings recorded on that day."
-                });
-            } else {
-                let pingsJSON = {};
-                docs.map(doc => {
-                    pingsJSON[doc.device_id] = [];
-                });
-                docs.map(doc => {
-                    pingsJSON[doc.device_id].push(doc.epoch_time);
-                });
-                response.json(pingsJSON);
-            }
-        }
-    );
-}
-
-function GetPingsBetweenByDevice(
-    deviceID,
-    startEpochTime,
-    endEpochTime,
-    response
-) {
-    Pings.find(
-        {
-            $and: [
-                { device_id: deviceID },
-                {
-                    epoch_time: {
-                        $gte: startEpochTime,
-                        $lt: endEpochTime
-                    }
-                }
-            ]
-        },
-        function(err, docs) {
-            if (docs === undefined) {
-                response.json({
-                    error: "That device ID has no pings recorded on that day."
-                });
-            } else {
-                let pingsArray = docs.map(doc => {
-                    return doc.epoch_time;
-                });
-                response.json(pingsArray);
-            }
-        }
-    );
-}
 
 module.exports = pingRouter;
