@@ -5,12 +5,11 @@ function GetPingsBetween(startEpochTime, endEpochTime) {
         if (docs === undefined) {
             return Promise.resolve({ error: "No pings recorded during that time." });
         } else {
-            // This can be optimised
             let pingsJSON = {};
             docs.map(doc => {
-                pingsJSON[doc.device_id] = [];
-            });
-            docs.map(doc => {
+                if (!pingsJSON.hasOwnProperty(doc.device_id)) {
+                    pingsJSON[doc.device_id] = [];
+                }
                 pingsJSON[doc.device_id].push(doc.epoch_time);
             });
             return Promise.resolve(pingsJSON);
